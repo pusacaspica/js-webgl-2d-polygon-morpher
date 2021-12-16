@@ -1,0 +1,61 @@
+<html>
+    <head> 
+        <title> henlo </title> 
+        <script type="text/javascript" src="C:\Program Files\nodejs\node_modules\dat.gui\build\dat.gui.js"></script>
+
+        <!--Vertex Shader-->
+        <script id="vertex-shader" type="x-shader/x-vertex">
+            #version 300 es
+            precision highp float;
+            uniform vec2 displacement;
+            in vec3 vertexPosition;
+            in vec3 vertexColor;
+            smooth out vec4 vColor;
+
+            void main(){
+                vec2 coord = vertexPosition.xy;
+                vec4 pos = vec4(coord.x + displacement.x, coord.y + displacement.y, 0.0, 1.0);
+
+                gl_PointSize = 8.0;
+                gl_Position = pos;
+
+                vColor= vec4(vertexColor,1.0);
+            }
+
+        </script>
+        <!--Fragment Shader-->
+        <script id="fragment-shader" type="x-shader/x-fragment">
+            #version 300 es
+            precision mediump float;
+
+            in vec4 vColor;
+            out vec4 fragColor;
+
+            void main(){
+                fragColor = vColor;
+            }
+        </script>
+
+        <!--Javascript code that:
+            - Binds both shaders to graphic objects
+            - Manage buffers
+            - Do the morphing thing
+            - Controls UI -->
+        <script type="text/javascript" src="morpher.js">
+
+            
+
+        </script>
+
+    </head>
+
+
+    <body bgcolor=saddlebrown>
+        <p align="center">
+            <canvas id="webgl-canvas" width="1024" height="768">
+                <font color=orange>Your browser does not support the HTML5 canvas element.</font>
+            </canvas>
+        </p>
+    </body>
+
+</html>
