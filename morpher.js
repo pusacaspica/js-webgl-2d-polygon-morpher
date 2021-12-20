@@ -52,6 +52,10 @@ class Vertex {
     get alias(){return this._alias;} set(n){this._alias = n;}
 }
 
+function calculateVertexDistance(vertex1, vertex2){
+    return Math.sqrt((vertex1.x-vertex2.x)*(vertex1.x-vertex2.x) + (vertex1.y-vertex2.y)*(vertex1.y-vertex2.y));
+}
+
 class Polygon {
     constructor(n_divisions, verticesPositions, color){
         this._n_divisions = n_divisions;
@@ -101,18 +105,32 @@ class Interpolator {
     get color(){return this._color;} set color(color){this._color = color;}
     get nSteps(){return this._nSteps;} set nSteps(n){this._nSteps = n;}
 
-    calculateFrames(interpolationMethod){
-        let step = 1/this.nSteps; 
-        if(interpolationMethod === Interpolation.LINEAR) step = 1/this.nSteps;
-        if(interpolationMethod == Interpolation.COSINE) step = ((1 - Math.cos(Math.PI))/(2))/this.nSteps;
-        var frames = {}
+    calculateFrames(){
+        let step = 1/this.nSteps;
+        var frames = {}, minimal_distant_vertices = {}, alocated = {};
         var i, j;
+        for(i = 0; i < this.polyDest.n_divisions; i++) alocated[i] = false;
+        for(i = 0; i < this.polyOrigin.n_divisions; i++){
+            let minDist =  1000, prevIndex = -1;
+            for(j = 0; j < this.polyDest.n_divisions; j++){
+                if(
+                    calculateVertexDistance(this.polyOrigin.verticesPositions[i], this.polyDest.verticesPositions[j]) < minDist 
+                    && alocated[j] == false
+                ){ 
+                        if(prevIndex > -1) alocated[prevIndex] = false; 
+                        prevIndex = j;
+                        minDist = calculateVertexDistance(this.polyOrigin.verticesPositions[i], this.polyDest.verticesPositions[j]);
+                        minimal_distant_vertices[i] = new Vertex(this.polyDest.verticesPositions[j].x, this.polyDest.verticesPositions[j].y, this.polyDest.verticesPositions[j].z, this.polyDest.verticesPositions[j].alias); 
+                        alocated[j] = true;
+                }
+            }
+        }
         for(i = 0; i < this.nSteps; i++){
             var verticesInterpolated = [];
             for(j = 0; j < this.polyOrigin.n_divisions; j++){
-                let vertex = new Vertex( this.polyOrigin.verticesPositions[j].x*(1 - i*step) + this.polyDest.verticesPositions[j].x*(i*step),
-                                         this.polyOrigin.verticesPositions[j].y*(1 - i*step) + this.polyDest.verticesPositions[j].y*(i*step), 
-                                         this.polyOrigin.verticesPositions[j].z*(1 - i*step) + this.polyDest.verticesPositions[j].z*(i*step));
+                let vertex = new Vertex( this.polyOrigin.verticesPositions[j].x*(1 - i*step) + minimal_distant_vertices[j].x*(i*step),
+                                         this.polyOrigin.verticesPositions[j].y*(1 - i*step) + minimal_distant_vertices[j].y*(i*step), 
+                                         this.polyOrigin.verticesPositions[j].z*(1 - i*step) + minimal_distant_vertices[j].z*(i*step) );
                 verticesInterpolated.push(vertex);
 
             }
@@ -203,7 +221,7 @@ const poly2vertices = new Array(new Vertex(0.90, 0.90, 1),
 var poly2 = new Polygon(poly2vertices.length, poly2vertices, new Color(0.25, 0.25, 1.0, 1.0));
 var steps = 125;
 var interpol = new Interpolator(poly1, poly2, new Color(1.0, 0.00, 0.25, 1.0), steps);
-var frames = interpol.calculateFrames(Interpolation.LINEAR);
+var frames = interpol.calculateFrames();
 var i = 0;
 
 var indices_edges_not_interpolated = [], vertices_not_interpolated = [], colors_not_interpolated = [];
