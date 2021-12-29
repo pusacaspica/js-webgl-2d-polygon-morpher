@@ -1,10 +1,10 @@
 'use strict';
 
-const Interpolation = {
-    LINEAR: 'LINEAR',
-    COSINE: 'COSINE'
-};
 
+// CLASS COLOR
+// Declares a color using RGBA colorspace
+// Inteded for usage with the Vertex class
+// Has one method: multicolor()
 class Color {
     constructor(r, g, b, a) {
         this._r = r;
@@ -17,6 +17,10 @@ class Color {
     get b() { return this._b; } set b(b) { this._b = b; }
     get a() { return this._a; } set a(a) { this._a = a; }
 
+    // multicolor
+    //  changes one's color to a different color
+    //  follows a semirandom pattern accordingly to the actual color
+    //  the pattern was decided by fooling around and finding interesting results
     multicolor() {
         if (this.r == 1 && this.g == 0 && this.b == 0) {
             this.r = 0; this.g = 1;
@@ -38,12 +42,16 @@ class Color {
     }
 }
 
+// VERTEX CLASS
+// Used to declare a single vertex
+// It doesn't *actually* declares a vertex within WebGL, but it keeps all relevant information concerning one vertex in one isolated instance
+// TODO: have the vertex to see its neighbors (it would work wonders for the "automatic interpolation". More on that at the Interpolator class.)
 class Vertex {
     constructor(x, y, alias) {
         this._x = x;
         this._y = y;
         this._z = 0.0;
-        this._alias = "";
+        this._alias = alias;
         return this;
     }
     get x() { return this._x; } set x(xVal) { this._x = xVal; }
@@ -52,10 +60,16 @@ class Vertex {
     get alias() { return this._alias; } set(n) { this._alias = n; }
 }
 
+// Global function with the intent of calculating the distance between two vertexes
+// Basically witchcraft and rocket science
 function calculateVertexDistance(vertex1, vertex2) {
     return Math.sqrt((vertex1.x - vertex2.x) * (vertex1.x - vertex2.x) + (vertex1.y - vertex2.y) * (vertex1.y - vertex2.y));
 }
 
+// POLYGON CLASS
+// Keeps all relevant information concerning a closed polygon within one instance
+// A polygon with one vertex is a dot, a polygon with two vertexes is a line
+// Has one method: loadPolygon(vertices, indexes, color, multicolor)
 class Polygon {
     constructor(n_divisions, verticesPositions, color) {
         this._n_divisions = n_divisions;
@@ -67,6 +81,11 @@ class Polygon {
     get verticesPositions() { return this._verticesPositions; }
     get color() { return this._color; } set color(color) { this._color = color; }
 
+    // loadPolygon:
+    //  returns void
+    //  receives: a vertex array, an index array, a color array, a boolean allowing multicolor
+    //  loadPolygon actually loads the arrays above with its vertices, the appropiate indexes and the colors of every single vertex
+    //  if multicolor is true, the polygon color is overriden by the multicolor function
     loadPolygon(vertices, indexes, color, multicolor) {
         var i = 0; var indexOffset = indexes.length / 2;
         for (; i < this.n_divisions; i++) {
@@ -93,12 +112,16 @@ class Polygon {
     }
 }
 
-
+// Dictionary that will prove itself massively useful in the future
 const DistanceMethod = {
     MANUAL: 'manual',
     AUTO: 'auto'
 }
 
+// INTERPOLATOR CLASS
+// Class creates all polygons that exists to interpolate from one polygon to another and stores them in a dictionary
+// Create as many polygons as steps at the moment the interpolator is created
+// Has one method: calculateFrames(distance)
 class Interpolator {
     constructor(polyOrigin, polyDest, color, nSteps) {
         this._polyOrigin = polyOrigin;
@@ -111,11 +134,17 @@ class Interpolator {
     get color() { return this._color; } set color(color) { this._color = color; }
     get nSteps() { return this._nSteps; } set nSteps(n) { this._nSteps = n; }
 
+    // calculateFrames(distance)
+    //  returns a Dictionary loaded with the polygons that exists between two other polygons (this.polyOrigin and this.polyDest)
+    //  receives as a parameter the way it should determine which vertexes in origin and destination are correspondent, in the shape of the DistanceMethod dictionary above
+    // interpolates even when origin and destination have different number of vertices
+    // as of now (28/12/2021), only the "Manual" input work properly
+    // the "Auto method" generate interpolated polygons with incorrect corners.
+    // TO-DO: fix Auto
     calculateFrames(distance) {
         let step = 1 / this.nSteps, polyDestVertices = this.polyDest.verticesPositions, polyOriginVertices = this.polyOrigin.verticesPositions;
         var frames = {}, minimal_distant_vertices = {}, alocated = {}, alocated_to = {}, offset = Math.abs(polyOriginVertices.length - polyDestVertices.length);
         var i, j;
-        console.log(polyOriginVertices.length + " " + polyDestVertices.length + " " + offset);
         if (polyDestVertices.length > polyOriginVertices.length) {
             for (i = 0; i < polyDestVertices.length; i++) {
                 alocated_to[i] = -1;
@@ -129,10 +158,10 @@ class Interpolator {
         }
         // IF TWO POLYGONS HAVE THE SAME AMOUNT OF VERTICES
         if (polyOriginVertices.length == polyDestVertices.length) {
-            for (i = 0; i < polyOriginVertices.length; i++) {
-                let minDist = 1000, prevIndex = -1;
-                for (j = 0; j < polyDestVertices.length; j++) {
-                    if (distance == DistanceMethod.AUTO) {
+            if (distance == DistanceMethod.AUTO) {
+                for (i = 0; i < polyOriginVertices.length; i++) {
+                    let minDist = 1000, prevIndex = -1;
+                    for (j = 0; j < polyDestVertices.length; j++) {
                         if (calculateVertexDistance(polyOriginVertices[i], polyDestVertices[j]) < minDist) {
                             if (alocated[j] == false) {
                                 if (prevIndex > -1) alocated[prevIndex] = false;
@@ -143,38 +172,21 @@ class Interpolator {
                                 alocated[j] = true;
                                 continue;
                             }
-                            /*if ( alocated_to[j]!=i && calculateVertexDistance(polyOriginVertices[i], polyDestVertices[j]) < calculateVertexDistance(polyOriginVertices[alocated_to[j]], polyDestVertices[j])){
-                                minDist = calculateVertexDistance(polyOriginVertices[i], polyDestVertices[j]);
-                                minimal_distant_vertices[i] = new Vertex(polyDestVertices[j].x, polyDestVertices[j].y, polyDestVertices[j].z, polyDestVertices[j].alias);
-                                let k, secondMinDist = 1000, pprevIndex = -1;
-                                for(k = 0; k < polyDestVertices.length; k++){
-                                    console.log("argh");
-                                    if(pprevIndex > -1) alocated[pprevIndex] = false;
-                                    pprevIndex = k;
-                                    if(alocated_to[j]==k) continue;
-                                    if(calculateVertexDistance(polyOriginVertices[alocated_to[j]], polyDestVertices[k]) < secondMinDist){
-                                        if(alocated[k] == true) continue;
-                                        secondMinDist = calculateVertexDistance(polyOriginVertices[alocated_to[j]], polyDestVertices[k]);
-                                        minimal_distant_vertices[alocated_to[j]] = new Vertex(polyDestVertices[k].x, polyDestVertices[k].y, polyDestVertices[k].z, polyDestVertices[k].alias);
-                                        alocated_to[j] = k;
-                                        alocated[k] = true;
-                                    }
-                                }
-                                alocated_to[j] = i;
-                            }*/
                         }
-                    } else if (distance == DistanceMethod.MANUAL) {
-                        minimal_distant_vertices[j] = new Vertex(polyDestVertices[j].x, polyDestVertices[j].y, polyDestVertices[j].z, polyDestVertices[j].alias);
                     }
+                }
+            } else if (distance == DistanceMethod.MANUAL) {
+                for (j = 0; j < polyDestVertices.length; j++) {
+                    minimal_distant_vertices[j] = new Vertex(polyDestVertices[j].x, polyDestVertices[j].y, polyDestVertices[j].z, polyDestVertices[j].alias);
                 }
             }
         }
         // IF THE ORIGIN POLYGON HAS A LARGER AMOUNT OF VERTICES
         else if (polyOriginVertices.length > polyDestVertices.length) {
-            for (i = 0; i < polyOriginVertices.length; i++) {
-                let minDist = 1000, prevIndex = -1;
-                for (j = 0; j < polyDestVertices.length; j++) {
-                    if (distance == DistanceMethod.AUTO) {
+            if (distance == DistanceMethod.AUTO) {
+                for (i = 0; i < polyOriginVertices.length; i++) {
+                    let minDist = 1000, prevIndex = -1;
+                    for (j = 0; j < polyDestVertices.length; j++) {
                         if (calculateVertexDistance(polyOriginVertices[i], polyDestVertices[j]) < minDist) {
                             if (alocated[j] == false) {
                                 if (prevIndex > -1) alocated[prevIndex] = false;
@@ -195,12 +207,15 @@ class Interpolator {
                                 }
                             }
                         }
-                    } else if (distance == DistanceMethod.MANUAL) {
-                        minimal_distant_vertices[j] = new Vertex(polyDestVertices[j].x, polyDestVertices[j].y, polyDestVertices[j].z, polyDestVertices[j].alias);
-                        if (i >= polyDestVertices.length) {
-                            minimal_distant_vertices[i] = new Vertex(polyDestVertices[polyDestVertices.length - 1].x, polyDestVertices[polyDestVertices.length - 1].y, polyDestVertices[polyDestVertices.length - 1].z, polyDestVertices[polyDestVertices.length - 1].alias);
-                        }
                     }
+                }
+            } else if (distance == DistanceMethod.MANUAL) {
+                for (i = 0; i < polyOriginVertices.length; i++) {
+                    if (i >= polyDestVertices.length) {
+                        minimal_distant_vertices[i] = new Vertex(polyDestVertices[polyDestVertices.length - 1].x, polyDestVertices[polyDestVertices.length - 1].y, polyDestVertices[polyDestVertices.length - 1].z, polyDestVertices[polyDestVertices.length - 1].alias);
+                        continue;
+                    }
+                    minimal_distant_vertices[i] = new Vertex(polyDestVertices[i].x, polyDestVertices[i].y, polyDestVertices[i].z, polyDestVertices[i].alias);
                 }
             }
         }
@@ -211,15 +226,13 @@ class Interpolator {
                     let minDist = 1000, prevIndex = -1;
                     for (j = 0; j < polyOriginVertices.length; j++) {
                         if (calculateVertexDistance(polyOriginVertices[j], polyDestVertices[i]) < minDist) {
-                            if (distance == DistanceMethod.AUTO) {
-                                if (alocated[i] == false) {
-                                    if (prevIndex > -1) alocated[prevIndex] == false;
-                                    prevIndex = i;
-                                    minDist = calculateVertexDistance(polyOriginVertices[j], polyDestVertices[i]);
-                                    minimal_distant_vertices[j] = new Vertex(polyDestVertices[i].x, polyDestVertices[i].y, polyDestVertices[i].z, polyDestVertices[i].alias);
-                                    alocated_to[i] = j;
-                                    alocated[i] = true;
-                                }
+                            if (alocated[i] == false) {
+                                if (prevIndex > -1) alocated[prevIndex] == false;
+                                prevIndex = i;
+                                minDist = calculateVertexDistance(polyOriginVertices[j], polyDestVertices[i]);
+                                minimal_distant_vertices[i] = new Vertex(polyDestVertices[i].x, polyDestVertices[i].y, polyDestVertices[i].z, polyDestVertices[i].alias);
+                                alocated_to[i] = j;
+                                alocated[i] = true;
                             }
                         }
                     }
@@ -232,8 +245,6 @@ class Interpolator {
         }
         var length = 0;
         for (const key in minimal_distant_vertices) {
-            const value = minimal_distant_vertices[key].x + " " + minimal_distant_vertices[key].y + " " + minimal_distant_vertices[key].z;
-            console.log(key + "->" + value);
             length++;
         }
         for (i = 0; i < this.nSteps; i++) {
@@ -247,9 +258,9 @@ class Interpolator {
             if (polyDestVertices.length > polyOriginVertices.length) {
                 var k = j;
                 while (k < length) {
-                    let vertex = new Vertex(polyOriginVertices[j-1].x * (1 - i * step) + minimal_distant_vertices[k].x * (i * step),
-                        polyOriginVertices[j-1].y * (1 - i * step) + minimal_distant_vertices[k].y * (i * step),
-                        polyOriginVertices[j-1].z * (1 - i * step) + minimal_distant_vertices[k].z * (i * step));
+                    let vertex = new Vertex(polyOriginVertices[j - 1].x * (1 - i * step) + minimal_distant_vertices[k].x * (i * step),
+                        polyOriginVertices[j - 1].y * (1 - i * step) + minimal_distant_vertices[k].y * (i * step),
+                        polyOriginVertices[j - 1].z * (1 - i * step) + minimal_distant_vertices[k].z * (i * step));
                     verticesInterpolated.push(vertex);
                     k++;
                 }
@@ -260,27 +271,56 @@ class Interpolator {
     }
 }
 
+
 let gl,
     canvas,
     program,
-    indices_edges = [],
+    indexes = [],
     colors = [],
     vertices = [],
     pointsVAO,
     pointsVertexBuffer,
     pointsColorBuffer,
     pointsIndexBuffer,
-    pointList,
-    displacementX = 0,
-    displacementY = 0,
-    //strokeControl = 8,
     control,
     date = new Date(),
     speed = 10,
+    playing = false,
     gui;
 
-//renderingMode = 'POINTS';
 
+// Defining vertices for polygons on screen
+// poly1 is the ORIGIN POLYGON, poly2 is the DESTINATION POLYGON
+const poly1vertices = new Array(
+    new Vertex(0.5, -0.8, 0, 1),
+    new Vertex(-0.8, 0.08, 0, 2),
+    new Vertex(0.8, 0.08, 0, 3),
+    //new Vertex(-0.5, -0.8, 0, 4),
+    new Vertex(0.0, 0.8, 0, 5)
+);
+
+const poly2vertices = new Array(
+    new Vertex(0.6, -0.9, 0, 1),
+    new Vertex(0.9, 0.2, 0, 2),
+    new Vertex(0.0, 0.9, 0, 3),
+    new Vertex(-0.9, 0.2, 0, 4),
+    new Vertex(-0.6, -0.9, 0, 5)
+);
+
+// Creating polygon objects that will be loaded into buffers
+var poly1 = new Polygon(poly1vertices.length, poly1vertices, new Color(1.0, 1.25, 0.25, 1.0));
+var poly2 = new Polygon(poly2vertices.length, poly2vertices, new Color(0.25, 0.25, 1.0, 1.0));
+
+// Defining number of polygons between poly and poly2
+var steps = 512;
+
+// Creating (steps) polygons between poly1 and poly2
+// To change the method by which the interpolations are calculated, one must change the parameter of the function calculateFrames
+var interpol = new Interpolator(poly1, poly2, new Color(1.0, 0.00, 0.25, 1.0), steps);
+var frames = interpol.calculateFrames(DistanceMethod.AUTO);
+var i = 0;
+
+// Getting shader
 function getShader(id) {
     const script = document.getElementById(id);
     const shaderName = script.text.trim();
@@ -305,6 +345,7 @@ function getShader(id) {
     return shader;
 }
 
+// Attaching shaders
 function initProgram() {
     const vertexShader = getShader('vertex-shader');
     const fragmentShader = getShader('fragment-shader');
@@ -324,34 +365,17 @@ function initProgram() {
     program.vertexColor = gl.getAttribLocation(program, 'vertexColor');
 }
 
-const poly1vertices = new Array(new Vertex(0.25, 0.25, 1),
-    new Vertex(0.0, 0.75, 2),
-    new Vertex(0.85, 0.0, 3), 
-    //new Vertex(0.0, -0.75, 4),
-    new Vertex(-0.4, -0.65, 6),
-    new Vertex(-0.85, 0.0, 5)
-);
-var poly1 = new Polygon(poly1vertices.length, poly1vertices, new Color(1.0, 1.25, 0.25, 1.0));
-
-const poly2vertices = new Array(new Vertex(0.90, 0.90, 1),
-    new Vertex(0.75, 0.0, 2),
-    new Vertex(0.90, -0.85, 3), 
-    new Vertex(-0.90, -0.85, 4),
-    //new Vertex(0.05, -0.30, 5),
-    new Vertex(-0.75, 0.25, 6)
-);
-var poly2 = new Polygon(poly2vertices.length, poly2vertices, new Color(0.25, 0.25, 1.0, 1.0));
-var steps = 125;
-var interpol = new Interpolator(poly1, poly2, new Color(1.0, 0.00, 0.25, 1.0), steps);
-var frames = interpol.calculateFrames(DistanceMethod.MANUAL);
-var i = 0;
-
+// Initiating buffers
+// The shapes are loaded in the following order:
+//      firstly, the ORIGIN POLYGON;
+//      then, the first frame of the multiple frames of the interpolation;
+//      lastly, the DESTINATION POLYGON to which the ORIGIN will be interpolated.
 function initBuffers() {
 
-    poly1.loadPolygon(vertices, indices_edges, colors, false);
-    poly2.loadPolygon(vertices, indices_edges, colors, false);
+    poly1.loadPolygon(vertices, indexes, colors, false);
+    frames[i].loadPolygon(vertices, indexes, colors, false);
+    poly2.loadPolygon(vertices, indexes, colors, false);
 
-    frames[i].loadPolygon(vertices, indices_edges, colors, false);
 
     //VAO stands for Vertex Array Object
     pointsVAO = gl.createVertexArray();
@@ -372,13 +396,17 @@ function initBuffers() {
 
     pointsIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, pointsIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices_edges), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.DYNAMIC_DRAW);
 
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
+// at every Draw call, a new frame between ORIGIN and DESTINATION is "loaded"
+//  (and by loaded, it means its vertices, indexes and colors are placed in a temporary array)
+// and the vertex buffer is updated at the right place
+//  (the right place being the part of the buffer that corresponds to the interpolated polygon)
 function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -389,22 +417,22 @@ function draw() {
 
     gl.bindVertexArray(pointsVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 12*poly1vertices.length + 12*poly2vertices.length, new Float32Array(updatedVertices), 0, updatedVertices.length);
+    //Float32 occupies 4 bytes, and every vertex is composed by 3 float values. Thus, one must offset the update by 4 * 3 * length of the first polygon's vertex array
+    gl.bufferSubData(gl.ARRAY_BUFFER, 12 * poly1vertices.length, new Float32Array(updatedVertices), 0, updatedVertices.length);
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsColorBuffer);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, pointsIndexBuffer);
-    gl.drawElements(gl.LINES, indices_edges.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.LINES, indexes.length, gl.UNSIGNED_SHORT, 0);
 
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
-var playing = false;
-
 function speedbutton() {
     this.speed = speed;
 };
 
+// GUI creation, for meddling with the speed of the interpolation and if the animation is happening (the play/pause button)
 function createGUI(speedbutton) {
     var gui = new dat.GUI({ name: 'Controller!' });
 
@@ -423,28 +451,13 @@ function createGUI(speedbutton) {
     return gui;
 }
 
-var previous_timestamp, first_timestamp;
-
 function render() {
-    /*var new_date = new Date();
-    var timestamp = new_date.getTime(), elapsed_time = timestamp - previous_timestamp;
-    while(elapsed_time < speed){
-        if((elapsed_time) > speed) {
-            previous_timestamp = timestamp;
-            i++;
-            if(i == steps) i = 0;    
-            console.log(updatedIndices.length);
-            break;
-        }
-    }*/
     requestAnimationFrame(render);
     draw();
 }
 
+// Initiating the program
 function init() {
-
-    first_timestamp = date.getTime();
-    previous_timestamp = first_timestamp;
 
     canvas = document.getElementById("webgl-canvas");
     if (!canvas) {
@@ -458,14 +471,11 @@ function init() {
     gl.clearColor(0, 0, 0, 0.90);
     gl.enable(gl.DEPTH_TEST);
 
-    //var polyControl = new createPolygonController(drawingOne.n_divisions);
     var speedControl = new speedbutton();
     gui = createGUI(speedControl);
 
-    //var listeners = new create_listeners();
-
     initProgram();
-    initBuffers(8);
+    initBuffers();
     render();
 }
 
