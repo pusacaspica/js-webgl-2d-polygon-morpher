@@ -65,14 +65,14 @@ morpher.js has a collection of classes:
  
 morpher.js also has a collection of functions:
 
-    * 'calculateVertexDistance(vertex1, vertex2)' Returns the distance between two vertices passed as a parameter;  
-    * 'getShader(id)' Find, compile and return a shader declared in GLSL that contains the id passed as a parameter; happens on page load;  
-    * 'initProgram()' Prepares program startup, assigning the appropriate shaders to the appropriate variables; happens when the page first loads;  
-    * 'initBuffers()' Initializes the necessary buffers, including space allocation for necessary polygons (the origin, the destination and the morphing, showing one frame at a time) to show on screen; happens when the page first loads;  
-    * 'draw()' draws the current frame, updating the appropriate frames to animate the transformation;  
-    * 'createGUI()' Creates the GUI, with a play/pause button and speed controller;  
-    * 'render()' Renders the screen, calling the draw() function;  
-    * 'init()' Initializes the WebGL canvas, also creating the GUI elements, initializing the program, the buffers and having the first frame render.  
+* 'calculateVertexDistance(vertex1, vertex2)' Returns the distance between two vertices passed as a parameter;  
+* 'getShader(id)' Find, compile and return a shader declared in GLSL that contains the id passed as a parameter; happens on page load;  
+* 'initProgram()' Prepares program startup, assigning the appropriate shaders to the appropriate variables; happens when the page first loads;  
+* 'initBuffers()' Initializes the necessary buffers, including space allocation for necessary polygons (the origin, the destination and the morphing, showing one frame at a time) to show on screen; happens when the page first loads;  
+* 'draw()' draws the current frame, updating the appropriate frames to animate the transformation;  
+* 'createGUI()' Creates the GUI, with a play/pause button and speed controller;  
+* 'render()' Renders the screen, calling the draw() function;  
+* 'init()' Initializes the WebGL canvas, also creating the GUI elements, initializing the program, the buffers and having the first frame render.  
  
 TO-DO:
     * Fix the “auto mode” (described above) to carry out the transformation respecting the edges as desired;  
