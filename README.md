@@ -10,7 +10,7 @@ A animação roda a cada chamada de draw(), atualizando sempre a valor escalar d
  
 A correspondência entre vértices dos dois polígonos é feita de forma completamente manual. Isto é, os vértices de origem e destino têm a correspondência feita conforme a ordem de declaração dos vértices de cada polígono. Dependendo do polígono, isso pode causar transformações pouco intuitivas. 
  
-O código possui um modo “automático” de fazer essa correspondência, atribuindo os vértices de destino aos vértices de origem através de proximidade. No atual estado, esse modo é pouco funcional uma vez que, ao final da operação, nem sempre as arestas da transformação corresponderão às arestas do polígono destino. Alternar entre os dois modos pode ser feito na linha 319, trocando entre “DistanceMethod.AUTO” e “DistanceMethod.MANUAL”.
+O código possui um modo “automático” de fazer essa correspondência, atribuindo os vértices de destino aos vértices de origem através de proximidade. No atual estado, esse modo é pouco funcional uma vez que, ao final da operação, nem sempre as arestas da transformação corresponderão às arestas do polígono destino. Alternar entre os dois modos pode ser feito na chamada da função INTERPOLATOR.calculateFrames(), trocando entre “DistanceMethod.AUTO” e “DistanceMethod.MANUAL”.
  
 morpher.js conta com uma coleção de classes:
     - classe COLOR, para armazenar cores que podem ser usadas por vértices;
@@ -53,7 +53,7 @@ The animation runs on each draw() function call at a rate equal to a scalar valu
  
 The correspondence between vertices of the two polygons is done completely manually. That is, the source and destination vertices are matched according to the order of declaration of the vertices of each polygon. Depending on the polygon, this can cause unintuitive transformations.
  
-The code has an “automatic” way of making this correspondence, assigning the source vertices to the destination vertices through proximity. In its current state, this mode is functional but causes unsatisfactory results since that, at the end of the operation, the edges of the transformation will not always match the edges of the target polygon. Switching between the two modes can be done in line 319, switching between “DistanceMethod.AUTO” and “DistanceMethod.MANUAL”.
+The code has an “automatic” way of making this correspondence, assigning the source vertices to the destination vertices through proximity. In its current state, this mode is barely functional since that, at the end of the operation, the edges of the transformation will not always match the edges of the target polygon. Switching between the two modes can be done at the INTERPOLATOR.calculateFrames() function call, switching between “DistanceMethod.AUTO” and “DistanceMethod.MANUAL”.
  
 morpher.js has a collection of classes:
     - COLOR class, to store colors that can be used by vertices;
@@ -63,22 +63,15 @@ morpher.js has a collection of classes:
     - speedbutton class, to handle the animation speed through the GUI.
  
 morpher.js also has a collection of functions:
-    -calculateVertexDistance(vertex1, vertex2)
-        - Returns the distance between two vertices passed as a parameter;
-    - getShader(id)
-        - Find, compile and return a shader declared in GLSL that contains the id passed as a parameter; happens on page load;
-    - initProgram()
-        - Prepares program startup, assigning the appropriate shaders to the appropriate variables; happens when the page first loads;
-    - initBuffers()
-        - Initializes the necessary buffers, including space allocation for necessary polygons (the origin, the destination and the morphing, showing one frame at a time) to show on screen; happens when the page first loads;
-    - draw()
-        - draws the current frame, updating the appropriate frames to animate the transformation;
-    - createGUI()
-        - Creates the GUI, with a play/pause button and speed controller;
-    -render()
-        - Renders the screen, calling the draw() function;
-    - init()
-        - Initializes the WebGL canvas, also creating the GUI elements, initializing the program, the buffers and having the first frame render.
+
+    - 'calculateVertexDistance(vertex1, vertex2)' Returns the distance between two vertices passed as a parameter;
+    - 'getShader(id)' Find, compile and return a shader declared in GLSL that contains the id passed as a parameter; happens on page load;
+    - 'initProgram()' Prepares program startup, assigning the appropriate shaders to the appropriate variables; happens when the page first loads;
+    - 'initBuffers()' Initializes the necessary buffers, including space allocation for necessary polygons (the origin, the destination and the morphing, showing one frame at a time) to show on screen; happens when the page first loads;
+    - 'draw()' draws the current frame, updating the appropriate frames to animate the transformation;
+    - 'createGUI()' Creates the GUI, with a play/pause button and speed controller;
+    - 'render()' Renders the screen, calling the draw() function;
+    - 'init()' Initializes the WebGL canvas, also creating the GUI elements, initializing the program, the buffers and having the first frame render.
  
 TO-DO:
     - Fix the “auto mode” (described above) to carry out the transformation respecting the edges as desired;
