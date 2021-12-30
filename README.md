@@ -6,7 +6,7 @@ Este trabalho calcula e imprime na tela a transformação (morphing) entre dois 
  
 **Para executar o código**, deve-se baixar os dois arquivos (tanto o morpher.js quanto o index.html), colocar os dois no mesmo diretório e abrir o arquivo .html. Lá, você terá acesso a duas formas definidas no código de morpher.js, um botão de play que toca a animação de transformação e um controlador de velocidade da animação.
  
-A animação roda a cada chamada da função Draw() dentro de morpher.js, o que pode fazer com que a velocidade da animação varie de acordo com o monitor onde o projeto está sendo executado. A velocidade de animação também pode variar conforme o número de polígonos intermediários calculados (i.e. o número de frames da animação), que é controlado por uma variável dentro do arquivo .js.
+A animação roda a cada chamada de draw(), atualizando sempre a valor escalar de velocidade vezes o espaço de tempo entre uma chamada e outra da função draw(). A velocidade de animação também pode variar conforme o número de polígonos intermediários calculados (i.e. o número de frames da animação), que é controlado por uma variável dentro do arquivo .js.
  
 A correspondência entre vértices dos dois polígonos é feita de forma completamente manual. Isto é, os vértices de origem e destino têm a correspondência feita conforme a ordem de declaração dos vértices de cada polígono. Dependendo do polígono, isso pode causar transformações pouco intuitivas. 
  
@@ -49,7 +49,7 @@ This assignment calculates and prints on screen the transformation (morphing) be
  
 **To run the code**, you must download both files (both morpher.js and index.html), place them in the same directory and open the .html file. There you will have access to two shapes defined in the morpher.js code, a play button that plays the morphing animation and an animation speed controller.
  
-The animation runs on each Draw() function call inside morpher.js, which can cause the animation speed to vary depending on the monitor the project is running on. The animation speed can also vary depending on the number of intermediate polygons calculated (i.e. the number of frames of the animation), which is controlled by a variable within the .js file.
+The animation runs on each draw() function call at a rate equal to a scalar value named "speed" times the amount of time between each draw() function call. The animation speed can also vary depending on the number of intermediate polygons calculated (i.e. the number of frames of the animation), which is controlled by a variable within the .js file.
  
 The correspondence between vertices of the two polygons is done completely manually. That is, the source and destination vertices are matched according to the order of declaration of the vertices of each polygon. Depending on the polygon, this can cause unintuitive transformations.
  

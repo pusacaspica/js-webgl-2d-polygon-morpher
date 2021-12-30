@@ -283,19 +283,18 @@ let gl,
     pointsIndexBuffer,
     control,
     date = new Date(),
-    speed = 10,
+    speed = 5,
     playing = false,
+    timestamp, previous_timestamp,
     gui;
 
 
 // Defining vertices for polygons on screen
 // poly1 is the ORIGIN POLYGON, poly2 is the DESTINATION POLYGON
 const poly1vertices = new Array(
-    new Vertex(0.5, -0.8, 0, 1),
-    new Vertex(-0.8, 0.08, 0, 2),
-    new Vertex(0.8, 0.08, 0, 3),
-    //new Vertex(-0.5, -0.8, 0, 4),
-    new Vertex(0.0, 0.8, 0, 5)
+    new Vertex(0.3, 0.3, 0, 1),
+    new Vertex(0.3, -0.3, 0, 2),
+    new Vertex(-0.3, 0.0, 0, 3)
 );
 
 const poly2vertices = new Array(
@@ -307,16 +306,16 @@ const poly2vertices = new Array(
 );
 
 // Creating polygon objects that will be loaded into buffers
-var poly1 = new Polygon(poly1vertices.length, poly1vertices, new Color(1.0, 1.25, 0.25, 1.0));
-var poly2 = new Polygon(poly2vertices.length, poly2vertices, new Color(0.25, 0.25, 1.0, 1.0));
+var poly1 = new Polygon(poly1vertices.length, poly1vertices, new Color(1.0, 0.35, 0.35, 1.0));
+var poly2 = new Polygon(poly2vertices.length, poly2vertices, new Color(0.35, 0.35, 1.0, 1.0));
 
 // Defining number of polygons between poly and poly2
 var steps = 512;
 
 // Creating (steps) polygons between poly1 and poly2
 // To change the method by which the interpolations are calculated, one must change the parameter of the function calculateFrames
-var interpol = new Interpolator(poly1, poly2, new Color(1.0, 0.00, 0.25, 1.0), steps);
-var frames = interpol.calculateFrames(DistanceMethod.AUTO);
+var interpol = new Interpolator(poly1, poly2, new Color(1.0, 1.00, 0.25, 1.0), steps);
+var frames = interpol.calculateFrames(DistanceMethod.MANUAL);
 var i = 0;
 
 // Getting shader
@@ -409,10 +408,13 @@ function initBuffers() {
 function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
+    
+    var new_date = new Date();
+    timestamp = new_date.getTime();
+    delta_time = timestamp - previous_timestamp;
     const updatedVertices = [], updatedIndices = [], updatedColors = [];
     frames[parseInt(i)].loadPolygon(updatedVertices, updatedIndices, updatedColors, true);
-    if (playing == true) i += speed; if (i >= steps) i = 0;
+    if (playing == true) i += (speed/10)*delta_time; if (i >= steps) i = 0;
 
     gl.bindVertexArray(pointsVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsVertexBuffer);
@@ -450,13 +452,20 @@ function createGUI(speedbutton) {
     return gui;
 }
 
+var delta_time;
+
 function render() {
+
     requestAnimationFrame(render);
     draw();
+
+    previous_timestamp = timestamp;
 }
 
 // Initiating the program
 function init() {
+
+    previous_timestamp = date.getTime();
 
     canvas = document.getElementById("webgl-canvas");
     if (!canvas) {
