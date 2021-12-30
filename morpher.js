@@ -45,7 +45,6 @@ class Color {
 // VERTEX CLASS
 // Used to declare a single vertex
 // It doesn't *actually* declares a vertex within WebGL, but it keeps all relevant information concerning one vertex in one isolated instance
-// TODO: have the vertex to see its neighbors (it would work wonders for the "automatic interpolation". More on that at the Interpolator class.)
 class Vertex {
     constructor(x, y, alias) {
         this._x = x;
@@ -356,7 +355,7 @@ function initProgram() {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Could not initialize shaders. Please, try harder.');
+        console.error('Could not initialize shaders.');
     }
 
     gl.useProgram(program);
