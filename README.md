@@ -13,11 +13,12 @@ A correspondência entre vértices dos dois polígonos é feita de forma complet
 O código possui um modo “automático” de fazer essa correspondência, atribuindo os vértices de destino aos vértices de origem através de proximidade. No atual estado, esse modo é pouco funcional uma vez que, ao final da operação, nem sempre as arestas da transformação corresponderão às arestas do polígono destino. Alternar entre os dois modos pode ser feito na chamada da função INTERPOLATOR.calculateFrames(), trocando entre “DistanceMethod.AUTO” e “DistanceMethod.MANUAL”.
  
 morpher.js conta com uma coleção de classes:
-    * classe COLOR, para armazenar cores que podem ser usadas por vértices;
-    * classe VERTEX, para armazenar informações de vértices individuais;
-    * classe POLYGON, para armazenar a coleção de vértices que compõe um polígono;
-    * classe INTERPOLATOR, para calcular as formas que uma forma assume ao ser transformada em outra e guardar essa informação em um dicionário;
-    * classe speedbutton, para fazer a manipulação da velocidade da animação através da GUI.
+
+* classe COLOR, para armazenar cores que podem ser usadas por vértices;
+* classe VERTEX, para armazenar informações de vértices individuais;
+* classe POLYGON, para armazenar a coleção de vértices que compõe um polígono;
+* classe INTERPOLATOR, para calcular as formas que uma forma assume ao ser transformada em outra e guardar essa informação em um dicionário;
+* classe speedbutton, para fazer a manipulação da velocidade da animação através da GUI.
  
 morpher.js também conta com uma coleção de funções:
 * calculateVertexDistance(vertex1, vertex2)
